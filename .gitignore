@@ -15,6 +15,9 @@
 # Output files from R CMD build
 /*.tar.gz
 
+# Ignore rawdata
+raw_data/
+
 # Output files from R CMD check
 /*.Rcheck/
 
