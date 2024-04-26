@@ -1,5 +1,8 @@
 library(mikropml)
 library(tidyverse)
+library(ggtext)
+library(broom)
+library(glue)
 ### using stringR to replace and clean the data
 #### code 121: https://www.youtube.com/watch?v=tBxGVfvx-Gc&list=PLmNrK_nkqBpIIRdQTS2aOs5OD7vVMKWAi&index=41&t=53s
 
@@ -45,7 +48,29 @@ composite <- inner_join(shared, taxonomy, by = c("otu")) %>%
 
 
 
+sig_genera <- composite%>% 
+  nest(data = -taxonomy) %>%
+  mutate(test = map(.x = data, 
+                    ~wilcox.test(rel_abund~srn,data = .x) %>% tidy)) %>% 
+  unnest(test) %>% 
+  filter(p.value < 0.05) %>% 
+  mutate(p_adujst = p.adjust(p.value, method = "BH")) %>% 
+  filter(p_adujst < 0.05) %>% 
+  select(taxonomy, p_adujst)
+  
+composite %>% 
+  inner_join(sig_genera, by ="taxonomy") %>% 
+  ggplot(aes(x = rel_abund, y = taxonomy, color = srn))+
+  geom_jitter()
 
+
+
+
+
+ 
+ggsave("figures/significant_genera.tiff", width = 6, height = 4)
+ 
+  
 
 
 
