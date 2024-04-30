@@ -1,4 +1,4 @@
-#### CC088
+#### CC08
 
 library(tidyverse)
 library(readxl)
@@ -15,14 +15,14 @@ metadata_alpha <- inner_join(metadata, alpha_diversity, by=c('sample_id'='group'
   mutate(disease_stat = factor(disease_stat,
                                levels=c("NonDiarrhealControl",
                                         "DiarrhealControl",
-                                        "Case")
-                               
-  )
+                                        "Case"))
   )
 
 healthy_color <- "#BEBEBE"
 diarrhea_color <- "#0000FF"
 case_color <- "#FF0000"
+
+
 
 invsimpson_summary <- metadata_alpha %>% 
   group_by(disease_stat) %>% 
@@ -49,10 +49,28 @@ case_n <- invsimpson_summary %>%
   pull(N)
 
 
-invsimpson_summary %>% 
-  ggplot(aes(x = disease_stat, y = mean, ymin = min, ymax = max, fill = disease_stat))+
-  geom_errorbar(width = 0.3)+
-  geom_col(show.legend = F)+
+metadata_alpha %>% 
+  # ggplot(aes(x = disease_stat, y = mean, ymin = min, ymax = max, fill = disease_stat))+
+  # geom_errorbar(width = 0.3)+
+  # geom_col(show.legend = F)+
+  ggplot(aes(x = disease_stat, y =invsimpson, color = disease_stat)) +
+  stat_summary(fun.data = median_hilow, 
+               geom = 'pointrange', 
+               show.legend = F,
+               color = "gray",
+               group = 1)+
+  stat_summary(fun.data = median_hilow,
+               geom = 'point',
+               show.legend = F,
+               size = 3)+
+  # stat_summary(fun.data = median_hilow,
+  #              geom = 'line',
+  #              show.legend = F,
+  #              group = 1,
+  #              color = "black")+
+  
+  
+  
   labs(x = NULL, y = "Inverse simpson index" )+
   scale_x_discrete(breaks = c("NonDiarrhealControl",
                               "DiarrhealControl",
