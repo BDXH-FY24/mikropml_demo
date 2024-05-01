@@ -49,16 +49,22 @@ metadata_alpha %>%
   ggplot(aes(x = disease_stat, 
              y =invsimpson, 
              fill = disease_stat)) +
-  stat_summary(fun.data = median_hilow, fun.args = .50,show.legend = F,
-               geom = "crossbar",
-               color = "black", alpha = 0.25, linewidth = 0.5)+
-  # geom_boxplot(show.legend = F,outlier.shape = NA,
-  #              alpha = 0.25, width = .6,
-  #              coef = 1)+ # Coef: by default 1.5 of IQR
-  geom_jitter(show.legend = F,
-              color = "black",
-              shape = 21,
-                position = position_jitter(width = 0.25, seed = 1234))+
+  
+  # geom_violin(show.legend = F,alpha = 0.55)+
+  geom_dotplot(binaxis = "y",
+               binwidth = 0.35,
+               stackdir = "center" ,
+               show.legend = F)+
+  stat_summary(fun = median, show.legend = F,
+               geom = "crossbar",width = 0.3,
+               color = "black")+
+  geom_boxplot(show.legend = F,outlier.shape = NA,
+               alpha = 0.25, width = .6,
+               coef = 1)+ # Coef: by default 1.5 of IQR
+  # geom_jitter(show.legend = F,
+  #             color = "black",
+  #             shape = 21,
+  #               position = position_jitter(width = 0.25, seed = 1234))+
   labs(x = NULL, y = "Inverse simpson index" )+
   scale_x_discrete(breaks = c("NonDiarrhealControl",
                               "DiarrhealControl",
@@ -84,7 +90,7 @@ metadata_alpha %>%
   theme_minimal()+
   theme(axis.text.x = element_markdown())
 
-ggsave("figures/StatSummary-cc091.png", width = 4.5, height = 3.5)
+ggsave("figures/StatSummary-cc092.png", width = 4.5, height = 3.5)
 
 
 
