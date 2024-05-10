@@ -1,4 +1,4 @@
-#### CC107
+#### CC108
 library(tidyverse)
 library(readxl)
 library(ggtext)
@@ -46,34 +46,42 @@ otu_rel_abund <- inner_join(metadata, otu_counts, by = "sample_id") %>%
 
   
 taxon_rel_abund <- otu_rel_abund %>% 
-    filter(level == "genus") %>% 
+    filter(level == "phylum") %>% 
     group_by(disease_stat, sample_id, taxon) %>% 
-    summarize(rel_abund = sum(rel_abund), .groups = "drop") %>% 
-    group_by(disease_stat, taxon) %>% 
-    summarize(mean_rel_abund  = 100 * mean(rel_abund), .groups = "drop") %>% 
+    summarize(rel_abund  = 100 * sum(rel_abund), .groups = "drop") %>% 
     mutate(taxon = str_replace_all(taxon,
                                    "(.*)_unclassified", "Unclassified<br>*\\1*"),
-           taxon = str_replace(taxon, "^([^<]*)$", "*\\1*"),
-           taxon = str_replace_all(taxon, "_"," ")
-    )
+           taxon = str_replace(taxon, "^([^<]*)$", "*\\1*"))
+    
   
 taxon_pool <- taxon_rel_abund %>%
-    group_by(taxon) %>% 
-    summarize(pool = max(mean_rel_abund) < 1,
-              mean =mean(mean_rel_abund) ,
+  group_by(disease_stat,taxon) %>%
+  summarize(mean = mean(rel_abund), .groups = "drop") %>% 
+  group_by(taxon) %>% 
+  summarize(pool = max(mean) < 3,
+              mean =mean(mean) ,
               .groups = "drop")
   
 inner_join(taxon_rel_abund, taxon_pool, by="taxon") %>% 
     mutate(taxon = if_else(pool, "Other", taxon)) %>% 
-    group_by(disease_stat, taxon) %>% 
-    summarize(mean_rel_abund = sum(mean_rel_abund),
+    group_by(sample_id,disease_stat, taxon) %>% 
+    summarize(rel_abund = sum(rel_abund),
               mean = min(mean),
               .groups = "drop") %>% 
     mutate(taxon = factor(taxon),
-           taxon = fct_reorder(taxon, mean, .desc = F)) %>% 
-    ggplot(aes(y =taxon, x = mean_rel_abund, 
-               fill = disease_stat))+
-    geom_col(position = position_dodge(), width = 0.6)+
+           taxon = fct_reorder(taxon, mean, .desc = T)) %>% 
+    ggplot(aes(x =taxon, y = rel_abund, 
+              fill = disease_stat))+
+    geom_jitter(position = position_jitterdodge(jitter.width = 0.4,
+                                                seed = 1234,
+                                                dodge.width = 0.8),
+                pch = 21, stroke = 0, size = 1.8)+
+    stat_summary(fun = median,geom = "crossbar", 
+                 
+                 position = position_dodge(width = 0.8),
+                 width = 0.8, size = 0.25,
+                 show.legend = F
+                 )+
     scale_fill_manual(name=NULL,
                       breaks = c("NonDiarrhealControl",
                                 "DiarrhealControl",
@@ -83,7 +91,7 @@ inner_join(taxon_rel_abund, taxon_pool, by="taxon") %>%
                                 "Diarreal,<br>*C. difficile* positive"),
                      values = c("gray", "dodgerblue", "red")
                      )+
-  scale_x_continuous(expand = c(0, NA))+
+  scale_y_continuous(expand = c(0, 0))+
     labs(y = NULL,
            x = " Mean Relative Abundance (%)"
          )+
@@ -91,13 +99,13 @@ inner_join(taxon_rel_abund, taxon_pool, by="taxon") %>%
     theme(
       axis.text.y = element_markdown(hjust = 1, vjust =1, size = 6),
       legend.text = element_markdown(size = 5),
-      legend.position = c(0.8,0.6), 
-      legend.key.height = unit(10, "pt"),
-      panel.grid.major.x = element_line(color = "lightgray")
-    )
+      legend.position = c(0.8,0.9), 
+      legend.background = element_rect(color = "black", fill = NA),
+      #legend.margin = margin( t = -1, r =3, b =3),
+      legend.key.height = unit(10, "pt"))
 
- 
-ggsave("figures/cc107_dodgermap.png", width = 5, height = 6)
+
+ggsave("figures/cc108_jitter.png", width = 10, height = 6)
 
 
 
